@@ -1,7 +1,8 @@
 from apistar import Include, Route
 from apistar.docs import docs_routes
 from apistar.statics import static_routes
-from project.api import login, register, event, event
+from project.api.auth import login, register
+from project.api.event import event, event
 
 routes = [
     Route('/login', 'GET', login),
