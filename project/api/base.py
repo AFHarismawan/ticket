@@ -21,9 +21,9 @@ def check_token(authorization):
     cred = auth(authorization)
     try:
         data = decode_token(cred)
-        cursor = db.user.find({'username': data.__getitem__('username'), 'password': data.__getitem__('password')})
+        cursor = db.user.find({'username': data.__getitem__('username'), 'password': data.__getitem__('password')}, {"group": 1})
         if cursor.count() == 1:
-            return True
+            return cursor[0].__getitem__('group')
     except jwt.DecodeError:
         return error(401, {'error': 'unauthorized'})
     return error(401, {'error': 'wrong credential'})

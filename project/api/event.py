@@ -34,20 +34,33 @@ schema = {
 }
 
 
+def upload_image(authorization: http.Header):
+    cred = check_token(authorization)
+    if isinstance(cred, int):
+        if cred == 1:
+            #todo handle upload image
+        else:
+            return error(400, {'error': 'unauthorized'})
+    return cred
+
+
 def add_event(authorization: http.Header, data: http.RequestData) -> Response:
     cred = check_token(authorization)
-    if cred == True:
-        try: 
-            validate(data, schema)
-            db.event.insert(data)
-            return Response(format_json(True, "Success"), status=200, headers={})
-        except ValidationError:
-            return error(400, {'error': 'wrong json schema'})
+    if isinstance(cred, int):
+        if cred == 1:
+            try:
+                validate(data, schema)
+                db.event.insert(data)
+                return Response(format_json(True, "Success"), status=200, headers={})
+            except ValidationError:
+                return error(400, {'error': 'wrong json schema'})
+        else:
+            return error(400, {'error': 'unauthorized'})
     return cred
 
 
 def get_event(authorization: http.Header) -> Response:
     cred = check_token(authorization)
-    if cred == True:
-        return Response(format_json(True, 'Success'), status=200, headers={})
+    if isinstance(cred, int):
+        return Response(format_json(True, list(db.event.find())), status=200, headers={})
     return cred
