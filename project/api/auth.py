@@ -1,31 +1,34 @@
 from apistar import http
 from pymongo.errors import DuplicateKeyError
 from apistar import Response
-from project.config import db, key
+from project.config import db
 from project.api.base import auth, error, format_json, encode_token
+from jsonschema import validate, ValidationError
 import hashlib
 
-def register(username, password, firstName, lastName, address, city, group) -> Response:
+
+schema = {
+    "type": "object",
+    "properties": {
+        "username": {"type": "string", "minLength": 6, "required": True},
+        "password": {"type": "string", "required": True},
+        "firstName": {"type": "string", "required": True},
+        "lastName": {"type": "string", "required": True},
+        "address": {"type": "string", "required": True},
+        "city": {"type": "string", "required": True},
+        "group": {"type": "number", "required": True},
+    }
+}
+
+
+def register(data: http.RequestData) -> Response:
     try:
-        if len(username) < 6:
-            raise ValueError('username is too short')
-
-        if len(password) < 6:
-            raise ValueError('password is too short')
-
-        db.user.insert({
-            'username': username, 
-            'password': password, 
-            'firstName': firstName, 
-            'lastName': lastName,
-            'address': address,
-            'city': city,
-            'group': int(group)
-        })
+        validate(data, schema)
+        db.user.insert(data)
     except DuplicateKeyError:
         return error(400, {'error': 'username already exists'})
-    except ValueError as e:
-        return error(400, {'error': 'check your input parameters'})
+    except ValidationError:
+        return error(400, {'error': 'wrong json schema'})
     return Response(format_json(True, 'Success'), status=200, headers={})
 
 
